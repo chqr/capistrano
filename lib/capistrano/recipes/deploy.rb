@@ -33,6 +33,8 @@ _cset(:revision)  { source.head }
 _cset :rails_env, "production"
 _cset :rake, "rake"
 
+_cset :atomic_symlink, false
+
 # =========================================================================
 # These variables should NOT be changed unless you are very confident in
 # what you are doing. Make sure you understand all the implications of your
@@ -326,7 +328,22 @@ namespace :deploy do
       end
     end
 
-    run "#{try_sudo} rm -f #{current_path} && #{try_sudo} ln -s #{latest_release} #{current_path}"
+    if fetch(:atomic_symlink)
+      atomic_symlink(current_path, latest_release)
+    else
+      run "#{try_sudo} rm -f #{current_path} && #{try_sudo} ln -s #{latest_release} #{current_path}"
+    end
+  end
+
+  # Atomically update symlink
+  def atomic_symlink(symlink, dest)
+    # if symlink does not exist, create it to point to a nonexistent location.
+    run "#{try_sudo} test -f #{symlink} || #{try_sudo} ln -s /tmp/does-not-exist #{symlink}"
+    # use technique describedhere to update symlink
+    run "#{try_sudo} rm -f #{symlink}-tmp && " <<
+        "#{try_sudo} ln -s #{dest} #{symlink}-tmp && " <<
+        "#{try_sudo} mv -T #{symlink}-tmp #{symlink} && " <<
+        "#{try_sudo} rm -f #{symlink}-tmp"
   end
 
   desc <<-DESC
