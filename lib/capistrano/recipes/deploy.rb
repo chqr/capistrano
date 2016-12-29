@@ -338,8 +338,8 @@ namespace :deploy do
   # Atomically update symlink
   def atomic_symlink(symlink, dest)
     # if symlink does not exist, create it to point to a nonexistent location.
-    run "#{try_sudo} test -f #{symlink} || #{try_sudo} ln -s /tmp/does-not-exist #{symlink}"
-    # use technique describedhere to update symlink
+    run "#{try_sudo} test -f #{symlink} || #{try_sudo} rm -f /tmp/does-not-exist-hopefully-32937 && #{try_sudo} ln -s /tmp/does-not-exist-hopefully-32937 #{symlink}"
+    # update-symlink-atomically
     run "#{try_sudo} rm -f #{symlink}-tmp && " <<
         "#{try_sudo} ln -s #{dest} #{symlink}-tmp && " <<
         "#{try_sudo} mv -T #{symlink}-tmp #{symlink} && " <<
